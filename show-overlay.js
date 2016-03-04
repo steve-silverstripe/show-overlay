@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-    if (-1 !== location.search.indexOf('show-overlay')) {
+    if (-1 !== location.hash.indexOf('show-overlay')) {
 
         var KEY_CODE_SHIFT = 16,
             KEY_CODE_CTRL = 91,
@@ -22,42 +22,58 @@ document.addEventListener("DOMContentLoaded", function () {
             shiftDown = false,
             ctrlDown = false,
             div = document.createElement('div'),
-            img = document.createElement('img');
+            img = document.createElement('img'),
+            src = 'you-need-to-set-your-overlay.jpg',
+            defaultOpacity = 0.3;
 
-        img.src = 'you-need-to-set-your-overlay.jpg';
-        var match = location.search.match(/show\-overlay=(.+?)(&|$)/);
+        var match = location.hash.match(/show\-overlay=(.+?)(&|$)/);
         if (null !== match) {
-            img.src = match[1];
+            src = match[1];
         }
 
-        div.style.opacity = 0.3;
+        div.style.opacity = defaultOpacity;
         div.style.position = 'absolute';
         div.style.top = '0';
         div.style.left = '0';
         div.style.zIndex = 10051;
-        div.appendChild(img);
+        div.style.width = '100%';
+        div.style.height = '100%';
+        div.style.backgroundImage = 'url("' + src + '")';
+        div.style.backgroundPosition = '0px 0px';
+        div.style.display = 'block';
+
         if (document.body.firstChild) {
             document.body.insertBefore(div, document.body.firstChild);
         } else {
             document.body.appendChild(div);
         }
 
-        function removePx(s) {
-            return s.replace(/[^0-9]/g, '');
-        }
-
         function updateCssPosition(what, amount) {
             amount *= 1;
-            var oldAmount = removePx(div.style[what]) * 1,
-                newAmount = oldAmount + amount;
-            div.style[what] = newAmount + 'px';
-            localStorage.setItem(what, newAmount);
+            var top = localStorage.getItem('top') * 1,
+                left = localStorage.getItem('left') * 1;
+            if (what == 'top') {
+                top += amount;
+                localStorage.setItem('top', top);
+            } else {
+                left += amount;
+                localStorage.setItem('left', left);
+            }
+            div.style.backgroundPosition = left + 'px ' + top + 'px';
         }
 
         function setOpacity(opacity) {
             opacity *= 1;
             div.style.opacity = opacity;
             localStorage.setItem('opacity', opacity);
+        }
+
+        function toggleOverlay() {
+            if(div.style.display == 'block') {
+                div.style.display = 'none';
+            } else {
+                div.style.display = 'block';
+            }
         }
 
         document.onkeydown = function (e) {
@@ -96,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     break;
 
                 case KEY_CODE_TILDE:
-                    setOpacity(0);
+                    toggleOverlay();
                     break;
 
                 case KEY_CODE_1:
@@ -164,16 +180,18 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
         };
 
-        if (true === localStorage.hasOwnProperty('top')) {
-            updateCssPosition('top', localStorage.getItem('top'));
+        if (!localStorage.hasOwnProperty('top')) {
+            localStorage.setItem('top', 0);
         }
-
-        if (true === localStorage.hasOwnProperty('left')) {
-            updateCssPosition('left', localStorage.getItem('left'));
+        if (!localStorage.hasOwnProperty('left')) {
+            localStorage.setItem('left', 0);
         }
-
-        if (true === localStorage.hasOwnProperty('opacity')) {
+        if (!localStorage.hasOwnProperty('opacity')) {
+            localStorage.setItem('opacity', defaultOpacity);
+        } else {
             setOpacity(localStorage.getItem('opacity'));
         }
+        updateCssPosition('top', 0);
+        updateCssPosition('left', 0);
     }
 });
